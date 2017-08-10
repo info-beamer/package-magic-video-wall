@@ -293,7 +293,7 @@ end)
 function node.render()
     gl.clear(0,0,0,1)
     if not assigned then
-        msg("[%s] Click on the setup, then 'Save' to start configuration", serial)
+        msg("[%s] Click on the setup, then 'Save' to start the configuration", serial)
     elseif tag then
         util.draw_correct(tag, 0, 0, WIDTH, HEIGHT)
         local h = HEIGHT / 12
