@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      h2 {
+        margin-top: 0;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .remove-mapping {
+        float: right;
+        border: 0;
+        background-color: transparent;
+      }
+    </style>
+  </head>
+  <body>
+    <div id='app'>
+      <config-ui/>
+    </div>
+
+    <script>
+      MOCK_ASSETS = {};
+      MOCK_NODE_ASSETS = {};
+      MOCK_DEVICES = [{
+        description: 'Pi 1',
+        assigned: true,
+        id: 1,
+        serial: "12345",
+      }, {
+        description: 'Pi 2',
+        assigned: true,
+        id: 2,
+        serial: "23456",
+      }, {
+        description: 'Pi 3',
+        assigned: true,
+        id: 3,
+        serial: "34567",
+      }, {
+        description: 'Pi 4',
+        assigned: true,
+        id: 4,
+        serial: "45678",
+      }];
+      MOCK_CONFIG = {
+        snapshot_w: 800,
+        snapshot_h: 370,
+        show_tags: true,
+        screens: [
+        {
+          serial: "12345",
+          homography: [],
+        },
+        {
+          serial: "23456",
+          homography: [1,2,3,4,5,6,7,8,9],
+        },
+        {
+          serial: "34567",
+          homography: [1,2,3,4,5,6,7,8,9],
+        }
+        ],
+      }
+    </script>
+
+    <script type="text/x-template" id="config-ui">
+      <div>
+        <h2>{{screens.length == 0 ? "No" : screens.length}} Assigned Device{{screens.length != 1 ? "s" : ""}}</h2>
+        <div class="alert"
+          v-for="screen in screens"
+          :class="{
+            'alert-success': screen.configured,
+            'alert-danger': !screen.configured,
+        }">
+          Device {{screen.serial}}&nbsp;-&nbsp;
+          <b v-if='screen.configured'>
+            Successfully mapped
+          </b>
+          <b v-else>
+            Not mapped
+          </b>
+        </div>
+
+        <p v-if="screens.length == 0">
+          <em>
+            No devices assigned to this setup yet. Click on the 'Assigned Device'
+            tab above and add devices to this setup. Then return to this
+            configuration page.
+          </em>
+        </p>
+
+        <div v-else-if='!is_mapping'>
+          <h2>Video Wall Mapping</h2>
+          <div class='row' v-if="show_tags">
+            <div class='col-xs-8'>
+              <div class='alert alert-info'>
+                {{message}}
+              </div>
+            </div>
+            <div class='col-xs-4'>
+              <label class="btn btn-primary btn-lg btn-block">
+                <span class='glyphicon glyphicon-camera'></span>
+                Upload/Capture<br/>Mapping Picture
+                <input 
+                  type="file"
+                  accept="image/*"
+                  @change="onDetect"
+                  hidden
+                >
+              </label>
+            </div>
+          </div>
+          <div class='alert alert-success' v-else>
+            Everything mapped! Click 'Save' to activate.
+            <button class='remove-mapping' @click="onResetMapping">
+              <b>Map again</b>
+              <span class='glyphicon glyphicon-repeat'></span>
+            </button>
+          </div>
+        </div>
+
+        <div v-else>
+          <h2>Video Wall Mapping</h2>
+          <div class='alert alert-info'>
+            <b>Mapping your picture now! This might take a moment.</b>
+          </div>
+        </div>
+      </div>
+    </script>
+
+    <script type="text/x-template" id="help-icon">
+      <span class='glyphicon glyphicon-question-sign help'
+        title='Visit help page (opens in a new window)'
+        @click='onClick'/>
+    </script>
+
+    <script src='apriltag.js'></script>
+    <script src="hosted.js"></script>
+    <script src="vue.js"></script>
+    <script src="vuex.js"></script>
+    <script src="config.js"></script>
+  </body>
+</html>

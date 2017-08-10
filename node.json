@@ -1,0 +1,48 @@
+{
+    "name": "Screen Configuration",
+    "custom_ui": "config.html",
+    "optional": [
+        ".*.js$",
+        ".*.html$",
+        "^example-.*",
+        "^doc-.*",
+        "package-header.jpg",
+        ".*.md$"
+    ],
+    "options": [{
+        "title": "Screens",
+        "name": "screens",
+        "type": "list",
+        "itemname": "Screen",
+        "items": [{
+            "title": "Device",
+            "ui_width": 6,
+            "name": "serial",
+            "type": "device"
+        }, {
+            "title": "Homography",
+            "ui_width": 6,
+            "name": "homography",
+            "type": "json",
+            "default": []
+        }]
+    }, {
+        "title": "Snapshot W",
+        "ui_width": 3,
+        "name": "snapshot_w",
+        "type": "float",
+        "default": 0
+    }, {
+        "title": "Snapshot H",
+        "ui_width": 3,
+        "name": "snapshot_h",
+        "type": "float",
+        "default": 0
+    }, {
+        "title": "Show Tags",
+        "ui_width": 3,
+        "name": "show_tags",
+        "type": "boolean",
+        "default": true
+    }]
+}
