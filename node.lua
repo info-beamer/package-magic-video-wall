@@ -20,10 +20,10 @@ local serial = sys.get_env "SERIAL"
 if not pcall(require, "tagmapper") then
     function node.render()
         font:write(0,  0, "Right now this package needs the 'testing'", 30, 1,1,1,1)
-        font:write(0, 30, "version of the info-beamer hosted OS. Go", 30, 1,1,1,1)
-        font:write(0, 60, "to the device page for your device "..serial, 30, 1,1,1,1)
-        font:write(0, 90, "click on the 'Manage' button in the top right corner", 30,1,1,1,1)
-        font:write(0,120, "and select 'Activatetesting channel' to install.", 30, 1,1,1,1)
+        font:write(0, 30, "version of the info-beamer hosted OS.", 30, 1,1,1,1)
+        font:write(0, 90, "Go to the device page for your device "..serial..",", 30, 1,1,1,1)
+        font:write(0,120, "click on the 'Manage' button in the top right corner", 30,1,1,1,1)
+        font:write(0,150, "and select 'Activatetesting channel' to install.", 30, 1,1,1,1)
     end
     return
 end
