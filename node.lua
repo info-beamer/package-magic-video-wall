@@ -23,7 +23,7 @@ if not pcall(require, "tagmapper") then
         font:write(0, 30, "version of the info-beamer hosted OS.", 30, 1,1,1,1)
         font:write(0, 90, "Go to the device page for your device "..serial..",", 30, 1,1,1,1)
         font:write(0,120, "click on the 'Manage' button in the top right corner", 30,1,1,1,1)
-        font:write(0,150, "and select 'Activatetesting channel' to install.", 30, 1,1,1,1)
+        font:write(0,150, "and select 'Activate testing channel' to install.", 30, 1,1,1,1)
     end
     return
 end
