@@ -75,7 +75,7 @@ get a feeling of how the mapping system works.
 Set a playlist
 --------------
 
-Click on the node labeled **Playlist Configuratio** on the
+Click on the node labeled **Playlist Configuration** on the
 left side of the configuration screen.
 
 You can add images and video assets to your playlist.
