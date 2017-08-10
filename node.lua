@@ -14,12 +14,24 @@ local PREPARE_TIME = 1 -- seconds
 -- be enough.
 local VIDEO_PRELOAD_TIME = .5 -- seconds
 
+local font = resource.load_font "silkscreen.ttf"
+local serial = sys.get_env "SERIAL"
+
+if not pcall(require, "tagmapper") then
+    function node.render()
+        font:write(0,  0, "Right now this package needs the 'testing'", 30, 1,1,1,1)
+        font:write(0, 30, "version of the info-beamer hosted OS. Go", 30, 1,1,1,1)
+        font:write(0, 60, "to the device page, click on the 'Manage' button", 30, 1,1,1,1)
+        font:write(0, 90, "in the top right corner and select 'Activate", 30,1,1,1,1)
+        font:write(0,120, "testing channel' to install.", 30, 1,1,1,1)
+    end
+    return
+end
+
 local json = require "json"
 local matrix = require "matrix2d"
 local tagmapper = require "tagmapper"
 
-local font = resource.load_font "silkscreen.ttf"
-local serial = sys.get_env "SERIAL"
 local min = math.min
 local assigned = false
 
