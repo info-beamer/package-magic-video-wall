@@ -1,7 +1,7 @@
 {
     "name": "Magic Video Wall",
     "author": "Florian Wesch <fw@dividuum.de>",
-    "desc": "Plays videos and images across multiple arbitrarily placed screens"
+    "desc": "Plays videos and images across multiple arbitrarily placed screens",
     "repository": "https://github.com/info-beamer/package-magic-video-wall",
     "version": "preview"
 }
