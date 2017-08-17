@@ -76,6 +76,8 @@ const store = new Vuex.Store({
     show_tags: true,
     is_mapping: false,
     message: "",
+    can_capture: !!navigator.mediaDevices,
+    is_capturing: false, 
   },
 
   mutations: {
@@ -147,9 +149,15 @@ const store = new Vuex.Store({
       state.snapshot_w = width;
       state.snapshot_h = height;
 
+      // Empty previous state
+      for (var idx = 0; idx < state.screens.length; idx++) {
+        var screen = state.screens[idx];
+        screen.homography = [];
+      }
+
+      // Apply detected tags
       for (var idx = 0; idx < tags.length; idx++) {
         var tag = tags[idx];
-        console.log(tag);
         var screen_id = tag.id-1;
         var homography = tag.m;
         if (screen_id >= 0 && screen_id < state.screens.length) {
@@ -171,6 +179,11 @@ const store = new Vuex.Store({
         state.show_tags = false;
       }
       state.is_mapping = false;
+      state.is_capturing = false;
+    },
+    start_capture(state) {
+      state.is_capturing = true;
+      state.message = "Point your webcam to your screens and click the 'Capture' button again";
     },
   },
   actions: {
@@ -185,6 +198,9 @@ const store = new Vuex.Store({
     },
     save_mapping(context, mapping) {
       context.commit('save_mapping', mapping);
+    },
+    start_capture(context) {
+      context.commit('start_capture');
     },
   }
 });
@@ -217,32 +233,73 @@ Vue.component('config-ui', {
       }
       return configured;
     },
+    can_capture() {
+      var s = this.$store.state;
+      return s.can_capture;
+    },
+    is_capturing() {
+      var s = this.$store.state;
+      return s.is_capturing;
+    }
   },
   methods: {
     onResetMapping() {
       this.$store.dispatch('reset_mapping');
     },
-    onDetect(evt) {
+    onCamButton(evt) {
+      if (this.is_capturing) {
+        this.captureAndCloseVideo();
+      } else {
+        var store = this.$store;
+        var video = this.$refs.video;
+        navigator.mediaDevices.getUserMedia({video: true}).then(function(stream) {
+          video.src = window.URL.createObjectURL(stream);
+          store.dispatch('start_capture');
+        }).catch(function(err) {
+          alert("Cannot access the camera");
+        });
+      }
+    },
+    onVideoClick(evt) {
+      this.captureAndCloseVideo();
+    },
+    onUpload(evt) {
       var store = this.$store;
+      var that = this;
       store.dispatch('start_mapping');
       var reader = new FileReader();
       reader.onload = function(evt) {
-          var im = new Image();
-          im.onload = function() {
-            console.log("Got image");
-            var detection = detector(im);
-            var tags = detection.tags;
-            console.log(tags.length, 'tags detected');
-            store.dispatch('save_mapping', {
-              width: detection.width,
-              height: detection.height,
-              tags: tags,
-            });
-          }
-          im.src = evt.target.result;
+        that.mapFromUrl(evt.target.result);
       }
       reader.readAsDataURL(evt.target.files[0]);     
-    }
+    },
+    captureAndCloseVideo() {
+      var video = this.$refs.video;
+      var width = video.offsetWidth
+      var height = video.offsetHeight;
+      var canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      var context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, width, height);
+      video.src = "";
+      this.mapFromUrl(canvas.toDataURL('image/png'));
+    },
+    mapFromUrl(img_url) {
+      var im = new Image();
+      im.onload = function() {
+        console.log("Got image");
+        var detection = detector(im);
+        var tags = detection.tags;
+        console.log(tags.length, 'tags detected');
+        store.dispatch('save_mapping', {
+          width: detection.width,
+          height: detection.height,
+          tags: tags,
+        });
+      }
+      im.src = img_url;
+    },
   }
 })
 
