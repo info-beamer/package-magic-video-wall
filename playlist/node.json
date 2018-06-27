@@ -24,5 +24,12 @@
             "hint": "How long should this item be displayed on screen. For videos, use their duration",
             "default": 5
         }]
+    }, {
+        "title": "Experimental: Multicast Stream Source",
+        "name": "stream",
+        "type": "string",
+        "doc_link": true,
+        "placeholder": "Url of your stream. Usually pointing to an .sdp file. Leave empty to play the playlist configured above.",
+        "default": ""
     }]
 }

@@ -99,8 +99,27 @@ devices will go black for a short moment until they are all
 back in sync. Therefore it is recommended to make all
 changes to a playlist and save only once.
 
+Streaming
+---------
+
+This package as experimental support for live streaming.
+Just enter a stream url and your device will play that
+stream instead of the configured playlist.
+
+Since there is no communication across devices running
+a video wall setup, synchronization is tricky. Right now
+streaming really only works if you configure a RTP multicast
+stream. You can use the "Multicast Video Streamer" to
+generate such a stream from a connected camera module.
+Learn more about the package:
+https://info-beamer.com/pkg/7314
+
 Release history
 ---------------
+
+### Version 'stream'
+
+Added experimental streaming support
 
 ### Version 'webcam'
 

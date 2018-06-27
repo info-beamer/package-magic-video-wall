@@ -242,6 +242,63 @@ end
 
 local playlist = Playlist()
 
+local function Stream()
+    local vid
+    local url
+
+    local function stop()
+        if vid then
+            vid:dispose()
+        end
+        vid = nil
+    end
+
+    local function start()
+        vid = resource.load_video{
+            file = url,
+        }
+    end
+
+    local function set(stream_url)
+        if stream_url == "" then
+            url = nil
+            stop()
+            return
+        end
+        if stream_url == url then
+            return
+        end
+        stop()
+        url = stream_url
+        start()
+    end
+
+    local function tick()
+        if not vid then
+            return
+        end
+        local state, w, h = vid:state()
+        if state == "loaded" then
+            screen.draw(vid)
+        elseif state == "finished" or state == "error" then
+            stop()
+            start()
+        end
+    end
+
+    local function has_stream()
+        return not not url
+    end
+
+    return {
+        set = set;
+        tick = tick;
+        has_stream = has_stream;
+    }
+end
+
+local stream = Stream()
+
 local function prepare_playlist(playlist)
     if #playlist >= 2 then
         return playlist
@@ -259,9 +316,7 @@ end
 
 local tag
 
-util.file_watch("config.json", function(raw)
-    local config = json.decode(raw)
-
+util.json_watch("config.json", function(config)
     tag = nil
     assigned = false
 
@@ -281,8 +336,7 @@ util.file_watch("config.json", function(raw)
     end
 end)
 
-util.file_watch("playlist/config.json", function(raw)
-    local config = json.decode(raw)
+util.json_watch("playlist/config.json", function(config)
     local items = {}
     for idx = 1, #config.playlist do
         local item = config.playlist[idx]
@@ -293,6 +347,7 @@ util.file_watch("playlist/config.json", function(raw)
         }
     end
     playlist.set(prepare_playlist(items))
+    stream.set(config.stream)
     node.gc()
 end)
 
@@ -311,6 +366,8 @@ function node.render()
         local t = "info-beamer hosted"
         local w = font:width(t, h)
         font:write((WIDTH-w)/2, h*0.05, t, h, 0,0,0,1)
+    elseif stream.has_stream() then
+        stream.tick()
     else
         playlist.tick(os.time())
     end
