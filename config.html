@@ -105,7 +105,7 @@
             <div class='col-xs-12 col-sm-6'>
               <div class="btn-group btn-group-justified" role="group">
                 <div class="btn-group" role="group">
-                  <label class="btn btn-primary btn-lg">
+                  <label class="btn btn-primary">
                     Upload/Capture<br/>Mapping Picture
                     <input 
                       type="file"
@@ -117,7 +117,7 @@
                 </div>
                 <div :if='can_capture' class="btn-group" role="group">
                   <button type="button"
-                    class="btn btn-lg"
+                    class="btn"
                     :class='{
                       "btn-success": is_capturing,
                       "btn-primary": !is_capturing,
