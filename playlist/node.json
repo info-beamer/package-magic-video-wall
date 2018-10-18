@@ -1,7 +1,6 @@
 {
     "name": "Playlist Configuration",
-    "options": [
-    {
+    "options": [{
         "title": "What to display",
         "type": "section"
     }, {
@@ -24,12 +23,27 @@
             "hint": "How long should this item be displayed on screen. For videos, use their duration",
             "default": 5
         }]
+    },
+
+    {
+        "title": "Additional options",
+        "type": "section"
     }, {
         "title": "Experimental: Multicast Stream Source",
         "name": "stream",
         "type": "string",
+        "ui_width": 9,
         "doc_link": true,
         "placeholder": "Url of your stream. Usually pointing to an .sdp file. Leave empty to play the playlist configured above.",
         "default": ""
+    }, {
+        "title": "Audio",
+        "ui_width": 3,
+        "name": "audio",
+        "type": "boolean",
+        "hint": "Play audio for all videos",
+        "info": "Enable audio",
+        "doc_link": true,
+        "default": false
     }]
 }

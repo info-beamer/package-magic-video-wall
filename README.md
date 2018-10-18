@@ -87,6 +87,13 @@ the less of the content you'll see on them later.
 I'd suggest you just play around with them a bit to
 get a feeling of how the mapping system works.
 
+Right now the package is limited to 32 screens.
+This isn't a hard limit and exists because
+only the first 32 tag images used to detect
+orientations are included with the package. If you
+want to use more than 32 screens, get in contact
+and the package can be updated.
+
 Set a playlist
 --------------
 

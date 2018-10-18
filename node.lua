@@ -40,6 +40,7 @@ local tagmapper = require "tagmapper"
 
 local min = math.min
 local assigned = false
+local audio = false
 
 local function msg(str, ...)
     font:write(10, HEIGHT-30, str:format(...), 24, 1,1,1,.5)
@@ -111,6 +112,7 @@ local Video = {
         if not self.obj then
             self.obj = resource.load_video{
                 file = self.file:copy();
+                audio = audio,
                 paused = true;
             }
         end
@@ -348,6 +350,7 @@ util.json_watch("playlist/config.json", function(config)
     end
     playlist.set(prepare_playlist(items))
     stream.set(config.stream)
+    audio = config.audio
     node.gc()
 end)
 
