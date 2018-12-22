@@ -38,11 +38,5 @@
         "name": "snapshot_h",
         "type": "float",
         "default": 0
-    }, {
-        "title": "Show Tags",
-        "ui_width": 3,
-        "name": "show_tags",
-        "type": "boolean",
-        "default": true
     }]
 }

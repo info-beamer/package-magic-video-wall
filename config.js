@@ -73,7 +73,6 @@ const store = new Vuex.Store({
     screens: [],
     snapshot_w: 0,
     snapshot_h: 0,
-    show_tags: true,
     is_mapping: false,
     message: "",
     can_capture: !!navigator.mediaDevices,
@@ -115,15 +114,20 @@ const store = new Vuex.Store({
       if (changed_assignment) {
         state.message = "New devices have been assigned to this setup. Click on 'Save' to show the configuration tags on all device. Then create a mapping picture.";
         state.screens = assigned_unconfigured_screens;
-        state.show_tags = true;
-      } else if (config.show_tags) {
-        state.message = "Some devices still require a mapping configuration. Create one now by uploading a mapping picture.";
-        state.screens = config.screens;
-        state.show_tags = true;
       } else {
-        state.message = "";
         state.screens = config.screens;
-        state.show_tags = config.show_tags;
+        var all_mapped = true;
+        for (var idx in config.screens) {
+          if (config.screens[idx].homography.length == 0) {
+            all_mapped = false;
+            break
+          }
+        }
+        if (all_mapped) {
+          state.message = "";
+        } else {
+          state.message = "Some devices still require a mapping configuration. Complete your mapping by uploading mapping pictures.";
+        }
       }
       state.snapshot_w = config.snapshot_w;
       state.snapshot_h = config.snapshot_h;
@@ -134,7 +138,6 @@ const store = new Vuex.Store({
         screen.homography = [];
       }
       state.message = "Mapping removed. Click 'Save' now to display the tags on all devices again, then capture a new mapping picture.";
-      state.show_tags = true;
     },
     start_mapping(state) {
       state.is_mapping = true;
@@ -149,7 +152,6 @@ const store = new Vuex.Store({
       state.snapshot_h = height;
 
       if (reset_mapping) {
-        console.log("resetting mapping");
         // Empty previous mapping state
         for (var idx = 0; idx < state.screens.length; idx++) {
           var screen = state.screens[idx];
@@ -176,9 +178,9 @@ const store = new Vuex.Store({
         }
       }
       if (need_mapping) {
-        state.message = "Could not detect all tags in the mapping picture. Please create another one from the exact same camera position. Or reset the mapping to start new.";
-      } else {
-        state.show_tags = false;
+        state.message = "Detected " + tags.length + " tags. Some tags are still missing for a complete mapping. " + 
+          "Please create another picture from the exact same camera position " +
+          "or reset the mapping to start new. You can preview the current mapping by clicking 'Save'.";
       }
       state.is_mapping = false;
       state.is_capturing = false;
@@ -228,9 +230,15 @@ Vue.component('config-ui', {
       var s = this.$store.state;
       return s.is_mapping;
     },
-    show_tags() {
+    fully_mapped() {
       var s = this.$store.state;
-      return s.show_tags;
+      for (var idx in s.screens) {
+        var screen = s.screens[idx];
+        if (screen.homography.length == 0) {
+          return false;
+        }
+      }
+      return true;
     },
     screens() {
       var s = this.$store.state;
@@ -328,7 +336,6 @@ ib.ready.then(() => {
       screens: state.screens,
       snapshot_w: state.snapshot_w,
       snapshot_h: state.snapshot_h,
-      show_tags: state.show_tags,
     })
   })
   store.dispatch('init', {

@@ -330,7 +330,7 @@ util.json_watch("config.json", function(config)
                 config.snapshot_w, config.snapshot_h
             )
             assigned = true
-            if config.show_tags then
+            if #screen_config.homography == 0 then
                 tag = tags[idx]
             end
             return

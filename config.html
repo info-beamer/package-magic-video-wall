@@ -45,7 +45,6 @@
       MOCK_CONFIG = {
         snapshot_w: 800,
         snapshot_h: 370,
-        show_tags: true,
         screens: [],
       }
     </script>
@@ -78,7 +77,14 @@
 
         <div v-else-if='!is_mapping'>
           <h2>Video Wall Mapping</h2>
-          <div v-if="show_tags">
+          <div class='alert alert-success' v-if="fully_mapped">
+            Everything mapped! Click 'Save' to activate.
+            <button class='remove-mapping' @click="onResetMapping">
+              <b>Reset mapping</b>
+              <span class='glyphicon glyphicon-repeat'></span>
+            </button>
+          </div>
+          <div v-else>
             <div class='alert alert-info'>
               {{message}}
             </div>
@@ -122,13 +128,6 @@
                 @click="onVideoClick">
               </video>
             </div>
-          </div>
-          <div class='alert alert-success' v-else>
-            Everything mapped! Click 'Save' to activate.
-            <button class='remove-mapping' @click="onResetMapping">
-              <b>Reset mapping</b>
-              <span class='glyphicon glyphicon-repeat'></span>
-            </button>
           </div>
         </div>
 
