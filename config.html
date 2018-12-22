@@ -29,42 +29,24 @@
       MOCK_DEVICES = [{
         description: 'Pi 1',
         assigned: true,
-        id: 1,
+        id: 111,
         serial: "12345",
       }, {
         description: 'Pi 2',
         assigned: true,
-        id: 2,
+        id: 222,
         serial: "23456",
       }, {
         description: 'Pi 3',
         assigned: true,
-        id: 3,
+        id: 333,
         serial: "34567",
-      }, {
-        description: 'Pi 4',
-        assigned: true,
-        id: 4,
-        serial: "45678",
       }];
       MOCK_CONFIG = {
         snapshot_w: 800,
         snapshot_h: 370,
         show_tags: true,
-        screens: [
-        {
-          serial: "12345",
-          homography: [],
-        },
-        {
-          serial: "23456",
-          homography: [1,2,3,4,5,6,7,8,9],
-        },
-        {
-          serial: "34567",
-          homography: [1,2,3,4,5,6,7,8,9],
-        }
-        ],
+        screens: [],
       }
     </script>
 
@@ -96,39 +78,40 @@
 
         <div v-else-if='!is_mapping'>
           <h2>Video Wall Mapping</h2>
-          <div class='row' v-if="show_tags">
-            <div class='col-xs-12 col-sm-6'>
-              <div class='alert alert-info'>
-                {{message}}
-              </div>
+          <div v-if="show_tags">
+            <div class='alert alert-info'>
+              {{message}}
             </div>
-            <div class='col-xs-12 col-sm-6'>
-              <div class="btn-group btn-group-justified" role="group">
-                <div class="btn-group" role="group">
-                  <label class="btn btn-primary">
-                    Upload/Capture<br/>Mapping Picture
-                    <input 
-                      type="file"
-                      accept="image/*"
-                      @change="onUpload"
-                      hidden
-                    >
-                  </label>
-                </div>
-                <div :if='can_capture' class="btn-group" role="group">
-                  <button type="button"
-                    class="btn"
-                    :class='{
-                      "btn-success": is_capturing,
-                      "btn-primary": !is_capturing,
-                    }'
-                    @click="onCamButton"
+            <div class="btn-group btn-group-justified" role="group">
+              <div class="btn-group" role="group">
+                <label class="btn btn-primary">
+                  Upload/Capture Mapping Picture
+                  <input 
+                    type="file"
+                    accept="image/*"
+                    @change="onUpload"
+                    hidden
                   >
-                    <span class='glyphicon glyphicon-camera'></span>
-                    <br/>
-                    Webcam Capture
-                  </button>
-                </div>
+                </label>
+              </div>
+              <div :if='can_capture' class="btn-group" role="group">
+                <button type="button"
+                  class="btn"
+                  :class='{
+                    "btn-success": is_capturing,
+                    "btn-primary": !is_capturing,
+                  }'
+                  @click="onCamButton"
+                >
+                  <span class='glyphicon glyphicon-camera'></span>
+                  Camera Capture
+                </button>
+              </div>
+              <div :if='has_any_mapping' class="btn-group" role="group">
+                <button class='btn btn-primary' @click="onResetMapping">
+                  <span class='glyphicon glyphicon-repeat'></span>
+                  Reset mapping
+                </button>
               </div>
             </div>
             <div class='col-xs-12' :class='{hidden:!is_capturing}'>
@@ -143,7 +126,7 @@
           <div class='alert alert-success' v-else>
             Everything mapped! Click 'Save' to activate.
             <button class='remove-mapping' @click="onResetMapping">
-              <b>Map again</b>
+              <b>Reset mapping</b>
               <span class='glyphicon glyphicon-repeat'></span>
             </button>
           </div>

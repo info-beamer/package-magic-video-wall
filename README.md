@@ -39,7 +39,7 @@ take a picture instead of selecting an existing picture.
 
 If your browser supports webcam access you can
 instead use the webcam capture mode. Just click on
-the **Webcam Capture** button. Your browser might
+the **Camera Capture** button. Your browser might
 ask for permission to access the webcam. Allow this
 access (Due to how the info-beamer configuration
 interface works, the live video stream //never//
@@ -47,7 +47,7 @@ leaves your browser: All computation is done on your
 machine and is never shared with info-beamer.com
 or any other site), then point the webcam to your video
 wall screens and click on either the live stream
-panel or on the **Webcam Capture** button again. 
+panel or on the **Camera Capture** button again.
 
 After you've selected or taken a picture it might take
 a moment to automatically detect all the tags in the picture.
@@ -56,11 +56,23 @@ the configuration interface should turn green.
 Just click on **Save** again and you're ready to show
 content on your video wall.
 
+If your snapshot didn't detect all tags or some
+tags are covered, you can create more mapping
+pictures to configure your wall. Be sure to capture
+any additional snapshot from the same position you
+took the initial snapshot. Otherwise your mapping
+won't work. Additional snapshots allows you to
+create setups that include partially occluded screens:
+First create a snapshot with all the screens in
+the "bottom layer". Then, while keeping the camera
+in the same position, add more screens on top and
+create more snapshots to complete your setup.
+
 Changing the mapping
 --------------------
 
 If you're not satisfied with your configuration, just
-click on **Map again**. This will remove the previous
+click on **Reset mapping**. This will remove the previous
 mapping configuration and allows you to create a new
 one. Make sure you click on **Save** so all screens
 show the configuration tags again.

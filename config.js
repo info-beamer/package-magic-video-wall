@@ -65,7 +65,7 @@ function AprilTags() {
   }
 }
 
-var detector = AprilTags();
+const detector = AprilTags();
 
 const store = new Vuex.Store({
   strict: true,
@@ -95,12 +95,6 @@ const store = new Vuex.Store({
         return a.serial.localeCompare(b.serial);
       });
       console.log("sorted assigned screens", assigned_unconfigured_screens);
-
-      var configured_serials = {};
-      for (var screen of config.screens) {
-        configured_serials[screen.serial] = true;
-      }
-      console.log("configured serials", configured_serials);
 
       var changed_assignment = false;
       if (assigned_unconfigured_screens.length != config.screens.length) {
@@ -145,14 +139,22 @@ const store = new Vuex.Store({
     start_mapping(state) {
       state.is_mapping = true;
     },
-    save_mapping(state, {width, height, tags}) {
+    save_mapping(state, {width, height, tags, reset_mapping}) {
+      if (state.snapshot_w != width || state.snapshot_h != height) {
+        console.log("different snapshot resolution. Resetting mapping");
+        reset_mapping = true;
+      }
+
       state.snapshot_w = width;
       state.snapshot_h = height;
 
-      // Empty previous state
-      for (var idx = 0; idx < state.screens.length; idx++) {
-        var screen = state.screens[idx];
-        screen.homography = [];
+      if (reset_mapping) {
+        console.log("resetting mapping");
+        // Empty previous mapping state
+        for (var idx = 0; idx < state.screens.length; idx++) {
+          var screen = state.screens[idx];
+          screen.homography = [];
+        }
       }
 
       // Apply detected tags
@@ -174,7 +176,7 @@ const store = new Vuex.Store({
         }
       }
       if (need_mapping) {
-        state.message = "Could not detect all tags in the mapping picture. Please create another one. Make sure that all tags are visible.";
+        state.message = "Could not detect all tags in the mapping picture. Please create another one from the exact same camera position. Or reset the mapping to start new.";
       } else {
         state.show_tags = false;
       }
@@ -211,6 +213,16 @@ Vue.component('config-ui', {
     message() {
       var s = this.$store.state;
       return s.message;
+    },
+    has_any_mapping() {
+      var s = this.$store.state;
+      for (var idx in s.screens) {
+        var screen = s.screens[idx];
+        if (screen.homography.length > 0) {
+          return true;
+        }
+      }
+      return false;
     },
     is_mapping() {
       var s = this.$store.state;
@@ -296,6 +308,7 @@ Vue.component('config-ui', {
           width: detection.width,
           height: detection.height,
           tags: tags,
+          reset_mapping: false,
         });
       }
       im.src = img_url;
