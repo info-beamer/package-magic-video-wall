@@ -136,6 +136,12 @@ https://info-beamer.com/pkg/7314
 Release history
 ---------------
 
+### Version 'incremental'
+
+The package now allows incremental mapping. This allows
+you to configure partically occluded screens by taking
+multiple configuration pictures from the same location.
+
 ### Version 'stream'
 
 Added experimental streaming support

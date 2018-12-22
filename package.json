@@ -6,5 +6,5 @@
     "runtime": {
         "outside_sources": true
     },
-    "version": "stream"
+    "version": "incremental"
 }
