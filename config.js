@@ -270,10 +270,20 @@ Vue.component('config-ui', {
       if (this.is_capturing) {
         this.captureAndCloseVideo();
       } else {
+        function createObjectURL(file) {
+          if (window.webkitURL) {
+            return window.webkitURL.createObjectURL(file);
+          } else if (window.URL && window.URL.createObjectURL) {
+            return window.URL.createObjectURL(file);
+          } else {
+            return null;
+          }
+        }
+
         var store = this.$store;
         var video = this.$refs.video;
         navigator.mediaDevices.getUserMedia({video: true}).then(function(stream) {
-          video.src = window.URL.createObjectURL(stream);
+          video.src = createObjectURL(stream);
           store.dispatch('start_capture');
         }).catch(function(err) {
           console.log(err);
