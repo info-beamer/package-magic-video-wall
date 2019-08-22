@@ -138,7 +138,9 @@ Release history
 
 ### Version 'pi4'
 
-Now compatible with the Pi4.
+Now compatible with the Pi4. In addition the way the 
+"Camera Capture" feature is implemented has been updated
+and should work with recent browser versions again.
 
 ### Version 'incremental'
 
