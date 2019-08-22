@@ -276,6 +276,7 @@ Vue.component('config-ui', {
           video.src = window.URL.createObjectURL(stream);
           store.dispatch('start_capture');
         }).catch(function(err) {
+          console.log(err);
           alert("Cannot access the camera");
         });
       }
