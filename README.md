@@ -136,6 +136,10 @@ https://info-beamer.com/pkg/7314
 Release history
 ---------------
 
+### Version 'pi4'
+
+Now compatible with the Pi4.
+
 ### Version 'incremental'
 
 The package now allows incremental mapping. This allows
