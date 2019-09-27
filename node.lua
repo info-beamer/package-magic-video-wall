@@ -1,6 +1,6 @@
 gl.setup(NATIVE_WIDTH, NATIVE_HEIGHT)
 
-util.noglobals()
+util.no_globals()
 
 -- We need to access files in playlist/
 node.make_nested()
@@ -16,23 +16,6 @@ local VIDEO_PRELOAD_TIME = .5 -- seconds
 
 local font = resource.load_font "silkscreen.ttf"
 local serial = sys.get_env "SERIAL"
-
-if not pcall(require, "tagmapper") then
-    function node.render()
-        font:write(0,  0, "Right now this package needs the 'testing'", 30, 1,1,1,1)
-        font:write(0, 30, "version of the info-beamer hosted OS.", 30, 1,1,1,1)
-
-        font:write(0, 90, "Go to the device page for your device "..serial..",", 30, 1,1,1,1)
-        font:write(0,120, "click on the 'Manage' button in the top right corner", 30,1,1,1,1)
-        font:write(0,150, "and select 'Activate testing channel' to install.", 30, 1,1,1,1)
-        font:write(0,180, "You may need to activate 'advanced options' on the", 30, 1,1,1,1)
-        font:write(0,210, "account page first.", 30, 1,1,1,1)
-
-        font:write(0,270, "Don't hesitate to get in contact with support if", 30, 1,1,1,1)
-        font:write(0,300, "you need help: https://info-beamer.com/contact", 30, 1,1,1,1)
-    end
-    return
-end
 
 local json = require "json"
 local matrix = require "matrix2d"
