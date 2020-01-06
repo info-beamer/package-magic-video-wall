@@ -60,16 +60,18 @@ especially on mobile devices, also allow you to directly
 take a picture instead of selecting an existing picture.
 
 If your browser supports webcam access you can
-instead use the webcam capture mode. Just click on
-the **Start Webcam Capture** button. Your browser might
+instead use the webcam mapping mode. Just click on
+the **Start Webcam Mapping** button. Your browser might
 ask for permission to access the webcam. Allow this
 access (Due to how the info-beamer configuration
 interface works, the live video stream *never*
 leaves your browser: All computation is done on your
 machine and is never shared with info-beamer.com
 or any other site), then point the webcam to your video
-wall screens and click on either the live stream
-panel or on the **Start Webcam Capture** button again.
+wall screens. You will see a preview window showing
+all detected screens. You can use the current result
+by clicking on the **Use current mapping** button or
+cancel the mapping using the **Cancel** button.
 
 After you've selected or taken a picture it might take
 a moment to automatically detect all the tags in the picture.
