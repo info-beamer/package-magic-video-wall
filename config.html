@@ -14,7 +14,21 @@
         background-color: transparent;
       }
       .video {
-        width: 100%;
+        width: 720px;
+        height: 407px;
+        margin-top: 15px;
+        text-align: center;
+      }
+      .video video {
+        max-height: 405px;
+        max-width: 720px;
+        border: 1px solid black;
+        margin-left: -1px;
+        background-color: black;
+        box-shadow: 4px 4px 5px rgba(0,0,0,0.3);
+      }
+      .mapping-tool {
+        margin-top: 50px;
       }
     </style>
   </head>
@@ -22,7 +36,6 @@
     <div id='app'>
       <config-ui/>
     </div>
-
     <script>
       MOCK_ASSETS = {};
       MOCK_NODE_ASSETS = {};
@@ -48,104 +61,6 @@
         screens: [],
       }
     </script>
-
-    <script type="text/x-template" id="config-ui">
-      <div>
-        <h2>{{screens.length == 0 ? "No" : screens.length}} Assigned Device{{screens.length != 1 ? "s" : ""}}</h2>
-        <div class="alert"
-          v-for="screen in screens"
-          :class="{
-            'alert-success': screen.configured,
-            'alert-danger': !screen.configured,
-        }">
-          Device {{screen.serial}}&nbsp;-&nbsp;
-          <b v-if='screen.configured'>
-            Successfully mapped
-          </b>
-          <b v-else>
-            Not mapped
-          </b>
-        </div>
-
-        <p v-if="screens.length == 0">
-          <em>
-            No devices assigned to this setup yet. Click on the 'Assigned Device'
-            tab above and add devices to this setup. Then return to this
-            configuration page.
-          </em>
-        </p>
-
-        <div v-else-if='!is_mapping'>
-          <h2>Video Wall Mapping</h2>
-          <div class='alert alert-success' v-if="fully_mapped">
-            Everything mapped! Click 'Save' to activate.
-            <button class='remove-mapping' @click="onResetMapping">
-              <b>Reset mapping</b>
-              <span class='glyphicon glyphicon-repeat'></span>
-            </button>
-          </div>
-          <div v-else>
-            <div class='alert alert-info'>
-              {{message}}
-            </div>
-            <div class="btn-group btn-group-justified" role="group">
-              <div class="btn-group" role="group">
-                <label class="btn btn-primary">
-                  Upload/Capture Mapping Picture
-                  <input 
-                    type="file"
-                    accept="image/*"
-                    @change="onUpload"
-                    hidden
-                  >
-                </label>
-              </div>
-              <div :if='can_capture' class="btn-group" role="group">
-                <button type="button"
-                  class="btn"
-                  :class='{
-                    "btn-success": is_capturing,
-                    "btn-primary": !is_capturing,
-                  }'
-                  @click="onCamButton"
-                >
-                  <span class='glyphicon glyphicon-camera'></span>
-                  Camera Capture
-                </button>
-              </div>
-              <div :if='has_any_mapping' class="btn-group" role="group">
-                <button class='btn btn-primary' @click="onResetMapping">
-                  <span class='glyphicon glyphicon-repeat'></span>
-                  Reset mapping
-                </button>
-              </div>
-            </div>
-            <div class='col-xs-12' :class='{hidden:!is_capturing}'>
-              <video
-                class='video'
-                ref='video'
-                autoplay
-                @click="onVideoClick">
-              </video>
-            </div>
-          </div>
-        </div>
-
-        <div v-else>
-          <h2>Video Wall Mapping</h2>
-          <div class='alert alert-info'>
-            <b>Mapping your picture now! This might take a moment.</b>
-          </div>
-        </div>
-      </div>
-    </script>
-
-    <script type="text/x-template" id="help-icon">
-      <span class='glyphicon glyphicon-question-sign help'
-        title='Visit help page (opens in a new window)'
-        @click='onClick'/>
-    </script>
-
     <script src='apriltag.js'></script>
     <script src="hosted.js"></script>
     <script src="vue.js"></script>

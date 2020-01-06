@@ -12,59 +12,158 @@ local PREPARE_TIME = 1 -- seconds
 -- must be enough time to load a video and have it
 -- ready in the paused state. Normally 500ms should
 -- be enough.
-local VIDEO_PRELOAD_TIME = .5 -- seconds
+local VIDEO_PRELOAD_TIME = 0.5 -- seconds
 
 local font = resource.load_font "silkscreen.ttf"
-local serial = sys.get_env "SERIAL"
+local tags = resource.load_image{
+    file = "tags.png",
+    nearest = true,
+}
+local black = resource.create_colored_texture(0, 0, 0, 1)
 
 local json = require "json"
 local matrix = require "matrix2d"
 local tagmapper = require "tagmapper"
+local scissors = sys.get_ext "scissors"
 
-local min = math.min
+local serial = sys.get_env "SERIAL"
 local assigned = false
 local audio = false
 
-local function msg(str, ...)
-    font:write(10, HEIGHT-30, str:format(...), 24, 1,1,1,.5)
-end
+local function Screen(screen_no, pos)
+    local mapped = function() end
+    local tag_id
+    local has_mapping
 
-local tags = {}
-for idx = 1, 32 do
-    tags[idx] = resource.load_image{
-        file = string.format("tag_%03d.png", idx),
-        nearest = true,
-    }
-end
-
-local function Screen()
-    local mapped
-
-    local function update(homography, snapshot_w, snapshot_h)
+    local function update(new_tag_id, homography, snapshot_w, snapshot_h)
+        tag_id = new_tag_id
         if #homography == 9 then
             mapped = tagmapper.create(matrix.new(
                 homography[1], homography[2], homography[3],
                 homography[4], homography[5], homography[6],
                 homography[7], homography[8], homography[9]
             ), snapshot_w, snapshot_h)
+            has_mapping = true
         else
-            mapped = function() end
+            mapped = function(fn) 
+                fn(WIDTH, HEIGHT)
+            end
+            has_mapping = false
         end
     end
 
     local function draw(obj)
-        return mapped(function(width, height)
-            util.draw_correct(obj, 0, 0, width, height)
-        end)
+        scissors.set(pos.x1, pos.y1, pos.x2, pos.y2)
+        gl.pushMatrix()
+            -- right now the homography mapping function
+            -- expects to map based on the full screen
+            -- size. So it centered to WIDTH/2, HEIGHT/2.
+            -- We modify the environment in a way so it
+            -- works across multiple screens.
+            gl.translate(pos.x1, pos.y1)
+            WIDTH = pos.x2 - pos.x1
+            HEIGHT = pos.y2 - pos.y1
+            mapped(function(width, height)
+                print(width, height)
+                util.draw_correct(obj, 0, 0, width, height)
+            end)
+        gl.popMatrix()
+        -- reset to previous values. this is required for
+        -- scissors.disable to work properly.
+        WIDTH = NATIVE_WIDTH
+        HEIGHT = NATIVE_HEIGHT
+        scissors.disable()
+    end
+
+    local function write(msg)
+        gl.pushMatrix()
+            -- gl.translate(pos.x1+10, pos.y2-10)
+            -- gl.rotate(-90, 0, 0, 1)
+            gl.translate(pos.x1+10, pos.y2-30)
+            font:write(0, 0, msg, 24, 1,1,1,.5)
+        gl.popMatrix()
+    end
+
+    local function draw_tag()
+        black:draw(pos.x1, pos.y1, pos.x2, pos.y2, 0.8)
+        local ox1, oy1, ox2, oy2 = util.scale_into(
+            pos.x2 - pos.x1, pos.y2 - pos.y1, 10, 10
+        )
+        local tag_x = (tag_id-1) % 16
+        local tag_y = math.floor((tag_id-1) / 16)
+        local tag_w, tag_h = tags:size()
+        tags:draw(
+            pos.x1 + ox1,
+            pos.y1 + oy1,
+            pos.x1 + ox2,
+            pos.y1 + oy2,
+            1,
+            1/tag_w * (10*tag_x   ), 1/tag_h * (10*tag_y   ), 
+            1/tag_w * (10*tag_x+10), 1/tag_h * (10*tag_y+10)
+        )
+        local row_h = (pos.y2-pos.y1) / 12
+        local screen_w = pos.x2 - pos.x1
+
+        local t = "info-beamer hosted"
+        local w = font:width(t, row_h)
+        font:write(pos.x1 + (screen_w-w)/2, pos.y1+row_h*0.05, t, row_h, 0,0,0,1)
+
+        for i, t in ipairs{
+            string.format("serial %s, screen %d", serial, screen_no),
+            "Take a mapping picture now",
+        } do
+            local w = font:width(t, row_h/2.2)
+            font:write(pos.x1 + (screen_w-w)/2, pos.y2-row_h+(i-1)*row_h/2.2, t, row_h/2.2, 0,0,0,1)
+        end
     end
 
     return {
         update = update;
+        has_mapping = function()
+            return has_mapping
+        end;
+        write = write;
         draw = draw;
+        draw_tag = draw_tag;
     }
 end
 
-local screen = Screen()
+local function overlap(a, b)
+    return a.x1 < b.x2 and a.x2 > b.x1 and
+           a.y1 < b.y2 and a.y2 > b.y1
+end
+
+local screens = {}
+
+if sys.displays then
+    -- info-beamer provides display position information?
+    -- check if we have an overlapping display configuration?
+    -- Only use primary display in that case.
+    if #sys.displays == 2 and overlap(sys.displays[1], sys.displays[2]) then
+        screens[#screens+1] = Screen(1, sys.displays[1])
+    else
+        -- Otherwise use all the displays
+        for i, display in ipairs(sys.displays) do
+            screens[#screens+1] = Screen(i, display)
+        end
+    end
+else
+    -- fallback
+    screens[#screens+1] = Screen(1, {
+        x1 = 0,
+        y1 = 0,
+        x2 = WIDTH,
+        y2 = HEIGHT,
+    })
+end
+
+local function msg(str, ...)
+    for i, screen in ipairs(screens) do
+        screen.write(("[%s / %d] %s"):format(
+            serial, i, str:format(...)
+        ))
+    end
+end
 
 local Image = {
     slot_time = function(self)
@@ -75,7 +174,9 @@ local Image = {
     end;
     tick = function(self, now)
         local state, w, h = self.obj:state()
-        screen.draw(self.obj)
+        for i, screen in ipairs(screens) do
+            screen.draw(self.obj)
+        end
     end;
     stop = function(self)
         if self.obj then
@@ -110,7 +211,7 @@ local Video = {
         if state ~= "loaded" and state ~= "finished" then
             print[[
 
-.--------------------------------------------.
+.-------------------------------------------.
   WARNING:
   lost video frame. video is most likely out
   of sync. increase VIDEO_PRELOAD_TIME (on all
@@ -118,7 +219,9 @@ local Video = {
 '--------------------------------------------'
 ]]
         else
-            screen.draw(self.obj)
+            for i, screen in ipairs(screens) do
+                screen.draw(self.obj)
+            end
         end
     end;
     stop = function(self)
@@ -152,7 +255,7 @@ local function Playlist()
         local next_running = 99999999999999
 
         if #items == 0 then
-            msg("[%s] no playlist configured", serial)
+            msg("no playlist configured")
             return
         end
 
@@ -172,7 +275,7 @@ local function Playlist()
                 item.state = "waiting"
             end
 
-            next_running = min(next_running, item.t_start)
+            next_running = math.min(next_running, item.t_start)
 
             if item.state == "running" then
                 item:tick(now)
@@ -182,7 +285,7 @@ local function Playlist()
 
         if num_running == 0 then
             local wait = next_running - now
-            msg("[%s] waiting for sync %.1f", serial, wait)
+            msg("waiting for sync %.1f", wait)
         end
     end
 
@@ -264,7 +367,9 @@ local function Stream()
         end
         local state, w, h = vid:state()
         if state == "loaded" then
-            screen.draw(vid)
+            for i, screen in ipairs(screens) do
+                screen.draw(vid)
+            end
         elseif state == "finished" or state == "error" then
             stop()
             start()
@@ -308,14 +413,14 @@ util.json_watch("config.json", function(config)
     for idx = 1, #config.screens do
         local screen_config = config.screens[idx]
         if screen_config.serial == serial then
-            screen.update(
-                screen_config.homography,
-                config.snapshot_w, config.snapshot_h
-            )
-            assigned = true
-            if #screen_config.homography == 0 then
-                tag = tags[idx]
+            for i, screen in ipairs(screens) do
+                screen.update(
+                    idx + (i-1)*128,
+                    i == 1 and screen_config.homography or screen_config.homography_secondary,
+                    config.snapshot_w, config.snapshot_h
+                )
             end
+            assigned = true
             return
         end
     end
@@ -337,24 +442,31 @@ util.json_watch("playlist/config.json", function(config)
     node.gc()
 end)
 
+local function all_mapped()
+    for i, screen in ipairs(screens) do
+        if not screen.has_mapping() then
+            return false
+        end
+    end
+    return true
+end
+
 function node.render()
     gl.clear(0,0,0,1)
+
     if not assigned then
-        msg("[%s] Click on the setup, then 'Save' to start the configuration", serial)
-    elseif tag then
-        util.draw_correct(tag, 0, 0, WIDTH, HEIGHT)
-        local h = HEIGHT / 12
-
-        local t = string.format("serial %s", serial)
-        local w = font:width(t, h)
-        font:write((WIDTH-w)/2, HEIGHT-h, t, h, 0,0,0,1)
-
-        local t = "info-beamer hosted"
-        local w = font:width(t, h)
-        font:write((WIDTH-w)/2, h*0.05, t, h, 0,0,0,1)
+        msg("Click on the setup, then 'Save' to start the configuration")
     elseif stream.has_stream() then
         stream.tick()
     else
         playlist.tick(os.time())
+    end
+
+    if assigned then
+        for i, screen in ipairs(screens) do
+            if not screen.has_mapping() then
+                screen.draw_tag()
+            end
+        end
     end
 end

@@ -8,6 +8,28 @@ this video wall package is capable of:
 
 [![Video Wall demo](https://img.youtube.com/vi/GI00HTJhSMU/0.jpg)](https://www.youtube.com/watch?v=GI00HTJhSMU)
 
+Prerequisites
+-------------
+
+You can use any number of screens to create a video
+wall of arbitrarily placed screens. Screens can be of
+any size and you can rotate and place your screens
+in any way you want.
+If you're using Pi4 devices, you can connect two
+screens to each Pi4. Otherwise with older Pis you'll
+need once Pi per screen.
+
+Content on your video wall can be images or videos.
+Due to how videos are rendered, the resolution
+of them should not exceed 720p. Higher resolutions
+might result in slowed down playback. HEVC videos
+are and will not be supported at all.
+
+Experimental streaming supported is also available,
+but results might vary. You'll probably get the best
+result if you use a multicast stream and all
+devices connected using Ethernet.
+
 Configure the screens
 ---------------------
 
@@ -39,15 +61,15 @@ take a picture instead of selecting an existing picture.
 
 If your browser supports webcam access you can
 instead use the webcam capture mode. Just click on
-the **Camera Capture** button. Your browser might
+the **Start Webcam Capture** button. Your browser might
 ask for permission to access the webcam. Allow this
 access (Due to how the info-beamer configuration
-interface works, the live video stream //never//
+interface works, the live video stream *never*
 leaves your browser: All computation is done on your
 machine and is never shared with info-beamer.com
 or any other site), then point the webcam to your video
 wall screens and click on either the live stream
-panel or on the **Camera Capture** button again.
+panel or on the **Start Webcam Capture** button again.
 
 After you've selected or taken a picture it might take
 a moment to automatically detect all the tags in the picture.
@@ -99,13 +121,6 @@ the less of the content you'll see on them later.
 I'd suggest you just play around with them a bit to
 get a feeling of how the mapping system works.
 
-Right now the package is limited to 32 screens.
-This isn't a hard limit and exists because
-only the first 32 tag images used to detect
-orientations are included with the package. If you
-want to use more than 32 screens, get in contact
-and the package can be updated.
-
 Set a playlist
 --------------
 
@@ -135,6 +150,12 @@ https://info-beamer.com/pkg/7314
 
 Release history
 ---------------
+
+### Version 'dual'
+
+This version now supports dual display configurations
+on the Pi4. The configuration interface has been reworked
+and setting up your video wall should be easier now.
 
 ### Version 'pi4'
 

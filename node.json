@@ -25,6 +25,12 @@
             "name": "homography",
             "type": "json",
             "default": []
+        }, {
+            "title": "Homography",
+            "ui_width": 6,
+            "name": "homography_secondary",
+            "type": "json",
+            "default": []
         }]
     }, {
         "title": "Snapshot W",
