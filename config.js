@@ -471,9 +471,11 @@ Vue.component('config-ui', {
         preview_ctx.font = "10px Arial"
         const screens = this.$store.state.config.screens
         const screen = screens[(tag.id % 128) - 1]
+        const display = (tag.id > 128) * 1
         if (screen) {
-          const display = (tag.id > 128) * 1
           preview_ctx.fillText(`${screen.serial} / HDMI${display}`, cx-30, cy-2)
+        } else {
+          preview_ctx.fillText(`<Unknown> / HDMI${display}`, cx-30, cy-2)
         }
       }
       this.last_detection = detection
