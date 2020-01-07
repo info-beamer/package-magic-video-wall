@@ -458,8 +458,15 @@ Vue.component('config-ui', {
         const tag = tags[idx]
         const cx = (tag.x1+tag.x2+tag.x3+tag.x4)/4,
               cy = (tag.y1+tag.y2+tag.y3+tag.y4)/4
+        const screens = this.$store.state.config.screens
+        const screen = screens[(tag.id % 128) - 1]
+        const display = (tag.id > 128) * 1
         preview_ctx.lineWidth = 2
-        preview_ctx.fillStyle = 'rgba(0,255,0,0.9)'
+        if (screen) {
+          preview_ctx.fillStyle = 'rgba(0,255,0,0.9)'
+        } else {
+          preview_ctx.fillStyle = 'rgba(128,128,128,0.9)'
+        }
         preview_ctx.beginPath()
         preview_ctx.moveTo(tag.x1, tag.y1)
         preview_ctx.lineTo(tag.x2, tag.y2)
@@ -469,9 +476,6 @@ Vue.component('config-ui', {
         preview_ctx.fill()
         preview_ctx.fillStyle = 'black'
         preview_ctx.font = "10px Arial"
-        const screens = this.$store.state.config.screens
-        const screen = screens[(tag.id % 128) - 1]
-        const display = (tag.id > 128) * 1
         if (screen) {
           preview_ctx.fillText(`${screen.serial} / HDMI${display}`, cx-30, cy-2)
         } else {
