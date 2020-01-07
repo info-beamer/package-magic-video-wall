@@ -477,10 +477,11 @@ Vue.component('config-ui', {
         preview_ctx.fillStyle = 'black'
         preview_ctx.font = "10px Arial"
         if (screen) {
-          preview_ctx.fillText(`${screen.serial} / HDMI${display}`, cx-30, cy-2)
+          preview_ctx.fillText(`${screen.serial}`, cx-30, cy-2)
         } else {
-          preview_ctx.fillText(`<Unknown> / HDMI${display}`, cx-30, cy-2)
+          preview_ctx.fillText(`<Unknown>`, cx-30, cy-2)
         }
+        preview_ctx.fillText(`HDMI${display}`, cx-15, cy+8)
       }
       this.last_detection = detection
       this.preview_timeout = setTimeout(this.renderPreview, 1000)
