@@ -109,7 +109,7 @@ local function Screen(screen_no, pos)
         font:write(pos.x1 + (screen_w-w)/2, pos.y1+row_h*0.05, t, row_h, 0,0,0,1)
 
         for i, t in ipairs{
-            string.format("serial %s, screen %d", serial, screen_no),
+            string.format("serial %s, HDMI%d", serial, screen_no-1),
             "Take a mapping picture now",
         } do
             local w = font:width(t, row_h/2.2)

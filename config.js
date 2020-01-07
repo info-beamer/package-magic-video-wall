@@ -472,8 +472,8 @@ Vue.component('config-ui', {
         const screens = this.$store.state.config.screens
         const screen = screens[(tag.id % 128) - 1]
         if (screen) {
-          const display = (tag.id > 128) * 1 + 1
-          preview_ctx.fillText(`${screen.serial} / ${display}`, cx-30, cy-2)
+          const display = (tag.id > 128) * 1
+          preview_ctx.fillText(`${screen.serial} / HDMI${display}`, cx-30, cy-2)
         }
       }
       this.last_detection = detection
