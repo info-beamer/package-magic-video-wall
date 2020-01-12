@@ -76,63 +76,101 @@ function AprilTags() {
 
 const detector = AprilTags()
 
-const editor = {
-  state: {
-    message: '',
-  },
-  mutations: {
-    set_message(state, message) {
-      state.message = message
-    },
-  },
-}
+const EventBus = new Vue()
 
-const setup_configuration = {
-  namespaced: true,
+const store = new Vuex.Store({
+  strict: true,
   state: {
+    // synced to config
     screens: [],
     snapshot_w: 0,
     snapshot_h: 0,
+
+    // internal state
+    save_seq: 0,
+    assigned_serials: null,
+    message: '',
   },
   getters: {
-    has_any_mapping(state, getters) {
-      return getters.num_mapped > 0
+    num_mappings(state, getters) {
+      let num = 0
+      for (const screen of getters.assigned_screens) {
+        num += screen.num_configured
+      } 
+      return num
     },
-    num_mapped(state) {
-      let count = 0
-      for (const idx in state.screens) {
-        const screen = state.screens[idx]
-        if (screen.homography.length > 0)
-          count++
-        if (screen.homography_secondary.length > 0)
-          count++
+    has_any_mapping(state, getters) {
+      return getters.num_mappings > 0
+    },
+    assigned_screens(state) {
+      let screens = []
+      for (const screen_id in state.screens) {
+        const screen = state.screens[screen_id]
+        if (state.assigned_serials.has(screen.serial)) {
+          screens.push({
+            screen_id: parseInt(screen_id),
+            serial: screen.serial,
+            num_configured: (
+                (screen.homography.length > 0 ? 1 : 0) +
+                (screen.homography_secondary.length > 0 ? 1 : 0)
+            )
+          })
+        }
       }
-      return count
+      screens.sort((a, b) => {
+        return a.serial.localeCompare(b.serial)
+      })
+      return screens
     },
     has_screens(state) {
-      return state.screens.length > 0
+      return state.assigned_serials.size > 0
     },
   },
   mutations: {
-    set_screens(state, screens) {
-      // compatibility for upgrading from previous version
+    init_screens(state, {screens, assigned_serials}) {
       for (const idx in screens) {
         const screen = screens[idx]
+        // compatibility for upgrading from previous package version
         if (!screen.homography_secondary) {
           screen.homography_secondary = []
         }
       }
       state.screens = screens
+      state.assigned_serials = assigned_serials
     },
     set_snapshot(state, {snapshot_w, snapshot_h}) {
       state.snapshot_w = snapshot_w
       state.snapshot_h = snapshot_h
     },
+    trim_screens(state) {
+      for (let screen_id = state.screens.length-1; screen_id >= 0; screen_id--) {
+        const screen = state.screens[screen_id]
+        if (!state.assigned_serials.has(screen.serial)) {
+          state.screens.splice(-1, 1)
+        } else {
+          break
+        }
+      }
+    },
+    add_screen(state, serial) {
+      state.screens.push({
+        serial: serial,
+        homography: [],
+        homography_secondary: [],
+      })
+      console.log("screen added:", serial)
+      this.commit('needs_save')
+    },
+    reset_screen(state, screen_id) {
+      const screen = state.screens[screen_id]
+      screen.homography = []
+      screen.homography_secondary = []
+    },
     reset_mapping(state) {
-      for (const idx in state.screens) {
-        const screen = state.screens[idx]
-        screen.homography = []
-        screen.homography_secondary = []
+      // reset the complete mapping
+      state.screens = []
+      for (const serial of state.assigned_serials) {
+        this.commit('add_screen', serial)
       }
     },
     update_mapping(state, {screen_id, is_secondary, homography}) {
@@ -143,59 +181,64 @@ const setup_configuration = {
           state.screens[screen_id].homography_secondary = homography
         }
       }
+      this.commit('needs_save')
+    },
+    set_message(state, message) {
+      state.message = message
+    },
+    needs_save(state) {
+      console.log("needs save")
+      state.save_seq += 1
     },
   },
   actions: {
-    init_from_config({commit}, {config}) {
-      commit('set_screens', config.screens)
+    init_from_config({state, commit, getters}, {config, devices}) {
+      let assigned_serials = new Set()
+      for (const device of devices) {
+        if (device.assigned) {
+          assigned_serials.add(device.serial)
+        }
+      }
+      commit('init_screens', {
+        screens: config.screens,
+        assigned_serials: assigned_serials,
+      })
       commit('set_snapshot', {
         snapshot_w: config.snapshot_w,
         snapshot_h: config.snapshot_h,
       })
-    },
-    start({state, commit, getters}, {devices}) {
-      let assigned_unconfigured_screens = []
-      for (const device of devices) {
-        if (device.assigned) {
-          assigned_unconfigured_screens.push({
-            serial: device.serial,
-            homography: [],
-            homography_secondary: [],
-          })
-        }
-      }
-      assigned_unconfigured_screens.sort((a, b) => {
-        return a.serial.localeCompare(b.serial)
-      })
-      console.log("sorted assigned screens", assigned_unconfigured_screens)
 
-      let changed_assignment = false
-      if (assigned_unconfigured_screens.length != state.screens.length) {
-        console.log("assigned screens count doesn't match configured screen count")
-        changed_assignment = true
-      } else {
-        for (const idx in assigned_unconfigured_screens) {
-          const unconfigured_screen = assigned_unconfigured_screens[idx]
-          const configured_screen = state.screens[idx]
-          if (unconfigured_screen.serial != configured_screen.serial) {
-            changed_assignment = true
-            console.log("ordered serial numbers of assigned and configured screens doesn't match")
-            break
-          }
+      // test which screens got removed
+      let configured_serials = new Set()
+      const screens = state.screens
+      for (const screen_id in screens) {
+        const screen = screens[screen_id]
+        configured_serials.add(screen.serial)
+        if (!state.assigned_serials.has(screen.serial)) {
+          commit("reset_screen", screen_id)
         }
       }
 
-      if (changed_assignment) {
-        commit('set_screens', assigned_unconfigured_screens)
-        commit('reset_mapping')
-        commit('set_message', 'Devices assignment has been changed. Click on "Save" to start mapping.', {root: true})
+      // test which screens got added
+      let has_new_screens = false
+      for (const serial of state.assigned_serials) {
+        if (!configured_serials.has(serial)) {
+          has_new_screens = true
+          commit("add_screen", serial)
+        }
+      }
+
+      commit("trim_screens")
+
+      if (has_new_screens) {
+        commit('set_message', 'New devices have been added. Save the setup to start mapping them.')
       } else {
-        if (!getters.has_screens) {
-          commit('set_message', 'No screens yet. Assign device to this setup, then return to this configuration page.', {root: true})
+        if (getters.assigned_screens.length == 0) {
+          commit('set_message', 'No screens yet. Assign one or more devices to this setup, then return to this configuration page.')
         } else if (!getters.has_any_mapping) {
-          commit('set_message', 'No mapping yet. Take a mapping picture to get started.', {root: true})
+          commit('set_message', 'No mapping yet. Upload a mapping picture or start Webcam Mapping to configure your video wall.')
         } else {
-          commit('set_message', 'Take additional mapping picture to continue mapping.', {root: true})
+          commit('set_message', 'Take additional mapping picture or start Webcam Mapping to continue mapping.')
         }
       }
     },
@@ -203,14 +246,13 @@ const setup_configuration = {
       const resolution_changed = state.snapshot_w != width || state.snapshot_h != height
 
       if (resolution_changed) {
-        commit('reset_mapping')
         commit('set_snapshot', {
           snapshot_w: width,
           snapshot_h: height,
         })
+        commit('reset_mapping')
+        commit('set_message', 'Mapping picture resolution has been updated. Save the setup to apply the result.')
       }
-
-      const before = getters.num_mapped
 
       // Apply detected tags
       for (const idx in tags) {
@@ -221,48 +263,14 @@ const setup_configuration = {
           homography: tag.m,
         })
       }
-
-      const added = getters.num_mapped - before
-
-      if (resolution_changed && tags.length == 0) {
-        commit('set_message', 'Mapping picture resolution has been updated and the mapping as been reset. No tags detected in the new picture. Take additional mapping pictures and try again.', {root: true})
-      } else if (resolution_changed && added > 0) {
-        commit('set_message', `Mapping picture resolution has been updated. Mapping starts with ${added} detected tags. Click "Save" to see the current mapping or take additional mapping pictures.`, {root: true})
-      } else if (tags.length == 0) {
-        commit('set_message', 'No tags detected. Take additional mapping pictures and try again.', {root: true})
-      } else if (added == 0) {
-        commit('set_message', `No new tags found among the ${tags.length} tags detected. Take additional mapping pictures or click on "Save" to apply the current mapping.`, {root: true})
-      } else {
-        commit('set_message', `Found ${added} new tags. Take additional mapping pictures or click on "Save" to apply the current mapping.`, {root: true})
-      }
-    },
-    reset_mapping({commit}) {
-      commit('reset_mapping')
-      commit('set_message', 'Mapping reset. Click on "Save" to show mapping tags on all displays.', {root: true})
-    },
-    saved({commit, getters}) {
-      if (!getters.has_any_mapping) {
-        commit('set_message', 'Devices are updating now and will show mapping tags. Take mapping pictures to create your video wall.', {root: true})
-      } else {
-        commit('set_message', 'Devices are updating now. Take additional mapping pictures to continue mapping.', {root: true})
-      }
     },
   }
-}
-
-const store = new Vuex.Store({
-  strict: true,
-  modules: {
-    config: setup_configuration,
-    editor: editor,
-  },
 })
 
 Vue.component('config-ui', {
   template: `
     <div>
       <h2>{{screens.length == 0 ? "No" : screens.length}} Video Wall Device{{screens.length != 1 ? "s" : ""}}</h2>
-
       <table class='table table-condensed' v-if='screens.length > 0'>
         <tbody>
           <tr
@@ -273,11 +281,14 @@ Vue.component('config-ui', {
           }">
             <td>
               Device {{screen.serial}}&nbsp;-&nbsp;
-              <b v-if='screen.num_configured > 0'>
-                {{screen.num_configured}} displays successfully mapped
+              <b v-if='screen.num_configured == 2'>
+                Both displays mapped.
+              </b>
+              <b v-else-if='screen.num_configured == 1'>
+                One display mapped.
               </b>
               <b v-else>
-                Not mapped yet. Create a mapping picture.
+                Not mapped yet.
               </b>
             </td>
           </tr>
@@ -285,9 +296,9 @@ Vue.component('config-ui', {
       </table>
 
       <div class='alert alert-warning' v-else>
-        No devices assigned to this setup yet. Click on the 'Assigned Device'
-        tab above and add devices to this setup. Then return to this
-        configuration page.
+        No devices assigned to this setup yet. Click on the
+        'Assigned Device' tab above and add devices to this
+        setup. Then return to this configuration page.
       </div>
 
       <div class='panel panel-default mapping-tool'>
@@ -295,41 +306,21 @@ Vue.component('config-ui', {
           Magic Mapping Tool
         </div>
         <div class='panel-body'>
-          <div class='alert alert-info'>
-            <b>Next step</b>: {{message}}
-          </div>
-          <template v-if='is_mapping'>
-            <div class='video'>
-              <video ref='video' autoplay @click="onVideoClick"></video>
-              <canvas ref='preview'></canvas>
+          <div class="btn-group btn-group-justified">
+            <div class="btn-group">
+              <label class="btn btn-primary" :disabled='is_mapping'>
+                <span class='glyphicon glyphicon-upload'></span>
+                Upload/Capture Mapping Picture
+                <input type="file" accept="image/*" @change="onUpload" hidden>
+              </label>
             </div>
-            <div class="btn-group btn-group-justified">
-              <div class="btn-group">
-                <button class="btn btn-primary" @click="useMapping"
-                  :disabled='last_detection == null'
-                >
-                  <span class='glyphicon glyphicon-ok'></span>
-                  Use current mapping
+            <div class="btn-group">
+              <template v-if='is_mapping'>
+                <button class="btn btn-block btn-primary" @click="stopCamMapping">
+                  Stop Webcam Mapping
                 </button>
-              </div>
-              <div class="btn-group">
-                <button class="btn btn-default" @click="discardMapping">
-                  <span class='glyphicon glyphicon-remove'></span>
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </template>
-          <template v-else>
-            <div class="btn-group btn-group-justified">
-              <div class="btn-group">
-                <label class="btn btn-primary">
-                  <span class='glyphicon glyphicon-upload'></span>
-                  Upload/Capture Mapping Picture
-                  <input type="file" accept="image/*" @change="onUpload" hidden>
-                </label>
-              </div>
-              <div class="btn-group">
+              </template>
+              <template v-else>
                 <button
                   class="btn btn-primary"
                   :disabled='!can_capture'
@@ -338,19 +329,26 @@ Vue.component('config-ui', {
                   <span class='glyphicon glyphicon-camera'></span>
                   Start Webcam Mapping
                 </button>
-              </div>
-              <div class="btn-group">
-                <button
-                  class='btn btn-primary'
-                  :disabled='!has_any_mapping'
-                  @click="onResetMapping"
-                >
-                  <span class='glyphicon glyphicon-repeat'></span>
-                  Reset mapping
-                </button>
-              </div>
+              </template>
             </div>
-          </template>
+            <div class="btn-group">
+              <button
+                class='btn btn-primary'
+                :disabled='!has_any_mapping'
+                @click="onResetMapping"
+              >
+                <span class='glyphicon glyphicon-repeat'></span>
+                Reset mapping
+              </button>
+            </div>
+          </div>
+          <div class='video' v-if='is_mapping'>
+            <video ref='video' autoplay/>
+            <canvas ref='preview'/>
+          </div>
+          <div class='alert alert-info'>
+            <b>Next step</b>: {{message}}
+          </div>
         </div>
       </div>
       <div class='popup'/>
@@ -360,38 +358,32 @@ Vue.component('config-ui', {
     can_capture: !!navigator.mediaDevices,
     is_mapping: false,
     preview_timeout: null,
-    last_detection: null,
   }),
+  created() {
+    EventBus.$on('saved', this.onSave)
+  },
   computed: {
     message() {
-      return this.$store.state.editor.message
+      return this.$store.state.message
+    },
+    num_mappings() {
+      return this.$store.getters.num_mappings
     },
     has_any_mapping() {
-      return this.$store.getters['config/has_any_mapping']
+      return this.$store.getters.has_any_mapping
     },
     screens() {
-      const config = this.$store.state.config
-      let configured = []
-      for (const idx in config.screens) {
-        const screen = config.screens[idx]
-        configured.push({
-          idx: parseInt(idx),
-          serial: screen.serial,
-          num_configured: (
-              (screen.homography.length > 0 ? 1 : 0) +
-              (screen.homography_secondary.length > 0 ? 1 : 0)
-          )
-        })
-      }
-      return configured
-    },
+      return this.$store.getters.assigned_screens
+    }
   },
   methods: {
     onResetMapping() {
-      this.$store.dispatch('config/reset_mapping')
+      this.allow_updates = false
+      this.$store.commit('reset_mapping')
+      this.setMessage('Mapping has been reset. Save this setup to show mapping tags on all displays.')
     },
     async mapFromUrl(img_url) {
-      this.$store.commit('set_message', 'Analysing mapping picture. Please wait..')
+      this.setMessage('Analysing mapping picture. Please wait..')
       await this.$nextTick()
       const im = new Image()
       im.onload = async () => {
@@ -399,11 +391,17 @@ Vue.component('config-ui', {
         const detection = detector.detect_in_image(im)
         const tags = detection.tags
         console.log(tags.length, 'tags detected')
-        this.$store.dispatch('config/add_mapping', {
+        const before = this.num_mappings
+        this.$store.dispatch('add_mapping', {
           width: detection.width,
           height: detection.height,
           tags: tags,
         })
+        if (this.num_mappings != before) {
+          this.setMessage('Mapping updated. Save this setup to apply the changes to your displays.')
+        } else {
+          this.setMessage('No new displays detected. Upload another mapping picture to try again.')
+        }
       }
       im.src = img_url
     },
@@ -418,22 +416,10 @@ Vue.component('config-ui', {
         tracks[idx].stop()
       }
       video.srcObject = null
-      this.last_detection = null
       this.is_mapping = false
+      this.setMessage('Webcam Mapping stopped. Save to apply any changes or continue mapping.')
     },
-    useMapping() {
-      const detection = this.last_detection
-      this.$store.dispatch('config/add_mapping', {
-        width: detection.width,
-        height: detection.height,
-        tags: detection.tags,
-      })
-      this.stopCamMapping()
-    },
-    discardMapping() {
-      this.stopCamMapping()
-    },
-    renderPreview() {
+    updateDetection() {
       const video = this.$refs.video
       const width = video.offsetWidth
       const height = video.offsetHeight
@@ -444,9 +430,6 @@ Vue.component('config-ui', {
       const ctx = canvas.getContext('2d')
       ctx.drawImage(video, 0, 0, width, height)
 
-      const detection = detector.detect_in_canvas_ctx(ctx)
-      const tags = detection.tags
-
       const preview = this.$refs.preview
       preview.style.left = video.offsetLeft + 'px'
       preview.width = width
@@ -454,58 +437,68 @@ Vue.component('config-ui', {
       const preview_ctx = preview.getContext('2d')
       preview_ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      for (const idx in tags) {
-        const tag = tags[idx]
-        const cx = (tag.x1+tag.x2+tag.x3+tag.x4)/4,
-              cy = (tag.y1+tag.y2+tag.y3+tag.y4)/4
-        const screens = this.$store.state.config.screens
-        const screen = screens[(tag.id % 128) - 1]
-        const display = (tag.id > 128) * 1
-        preview_ctx.lineWidth = 2
-        if (screen) {
-          preview_ctx.fillStyle = 'rgba(0,255,0,0.9)'
-        } else {
-          preview_ctx.fillStyle = 'rgba(128,128,128,0.9)'
+      if (this.allow_updates) {
+        const detection = detector.detect_in_canvas_ctx(ctx)
+        const tags = detection.tags
+        for (const idx in tags) {
+          const tag = tags[idx]
+          const cx = (tag.x1+tag.x2+tag.x3+tag.x4)/4,
+                cy = (tag.y1+tag.y2+tag.y3+tag.y4)/4
+          const screens = this.$store.state.screens
+          const screen = screens[(tag.id % 128) - 1]
+          const display = (tag.id > 128) * 1
+          preview_ctx.lineWidth = 2
+          if (screen) {
+            preview_ctx.fillStyle = 'rgba(0,255,0,0.9)'
+          } else {
+            preview_ctx.fillStyle = 'rgba(128,128,128,0.9)'
+          }
+          preview_ctx.beginPath()
+          preview_ctx.moveTo(tag.x1, tag.y1)
+          preview_ctx.lineTo(tag.x2, tag.y2)
+          preview_ctx.lineTo(tag.x3, tag.y3)
+          preview_ctx.lineTo(tag.x4, tag.y4)
+          preview_ctx.closePath()
+          preview_ctx.fill()
+          preview_ctx.fillStyle = 'black'
+          preview_ctx.font = "10px Arial"
+          if (screen) {
+            preview_ctx.fillText(`${screen.serial}`, cx-30, cy-2)
+          } else {
+            preview_ctx.fillText(`<Unknown>`, cx-30, cy-2)
+          }
+          preview_ctx.fillText(`HDMI${display}`, cx-15, cy+8)
         }
-        preview_ctx.beginPath()
-        preview_ctx.moveTo(tag.x1, tag.y1)
-        preview_ctx.lineTo(tag.x2, tag.y2)
-        preview_ctx.lineTo(tag.x3, tag.y3)
-        preview_ctx.lineTo(tag.x4, tag.y4)
-        preview_ctx.closePath()
-        preview_ctx.fill()
-        preview_ctx.fillStyle = 'black'
-        preview_ctx.font = "10px Arial"
-        if (screen) {
-          preview_ctx.fillText(`${screen.serial}`, cx-30, cy-2)
-        } else {
-          preview_ctx.fillText(`<Unknown>`, cx-30, cy-2)
-        }
-        preview_ctx.fillText(`HDMI${display}`, cx-15, cy+8)
-      }
-      this.last_detection = detection
-      this.preview_timeout = setTimeout(this.renderPreview, 1000)
-    },
-    onCamMapping(evt) {
-      evt.target.blur()
-      if (this.is_mapping) {
-        this.captureAndCloseVideo()
-      } else {
-        navigator.mediaDevices.getUserMedia({video: true}).then(async stream => {
-          this.is_mapping = true
-          await this.$nextTick()
-          const video = this.$refs.video
-          video.srcObject = stream
-          this.$store.commit('set_message', 'Point the camera to your screens. Click the "Use current mapping" button to add the detected screens to your video wall.')
-        }).catch(err => {
-          console.log(err)
-          alert("Cannot access the camera")
+
+        const before = this.num_mappings
+        this.$store.dispatch('add_mapping', {
+          width: detection.width,
+          height: detection.height,
+          tags: detection.tags,
         })
-        this.preview_timeout = setTimeout(this.renderPreview, 1000)
+        if (this.num_mappings != before) {
+          this.setMessage('Mapping updated. Save this setup to apply the changes to your displays.')
+        }
+      } else {
+        preview_ctx.fillStyle = 'white'
+        preview_ctx.font = "15px Arial"
+        preview_ctx.fillText(`Detection paused. Save this setup to resume.`, 5, 20)
       }
+      this.preview_timeout = setTimeout(this.updateDetection, 1000)
     },
-    onVideoClick() {
-      this.captureAndCloseVideo()
+    onCamMapping() {
+      navigator.mediaDevices.getUserMedia({video: true}).then(async stream => {
+        this.is_mapping = true
+        await this.$nextTick()
+        const video = this.$refs.video
+        video.srcObject = stream
+        this.setMessage('Webcam Mapping started. Point the camera to your displays.')
+      }).catch(err => {
+        console.log(err)
+        alert("Cannot access the camera")
+      })
+      this.allow_updates = true
+      this.preview_timeout = setTimeout(this.updateDetection, 1000)
     },
     onUpload(evt) {
       const reader = new FileReader()
@@ -514,29 +507,47 @@ Vue.component('config-ui', {
       }
       reader.readAsDataURL(evt.target.files[0])
     },
+    onSave() {
+      this.allow_updates = true
+      if (this.preview_timeout) {
+        clearTimeout(this.preview_timeout)
+        if (this.is_mapping) {
+          this.preview_timeout = setTimeout(this.updateDetection, 3000)
+        }
+      }
+      if (!this.has_any_mapping) {
+        this.setMessage('Devices are updating now and will show mapping tags. Upload a mapping picture or start Webcam Mapping to configure your video wall.')
+      } else {
+        this.setMessage(`Devices are updating now. If there's still unmapped screens, continue mapping.`)
+      }
+    },
+    setMessage(msg) {
+      this.$store.commit('set_message', msg)
+    },
   }
 })
 
 ib.setDefaultStyle()
 ib.ready.then(() => {
-  store.dispatch('config/init_from_config', {
-    config: ib.config
-  })
+  let last_save = 0
   store.subscribe((mutation, state) => {
-    if (mutation.type.startsWith('config/')) {
+    if (state.save_seq != last_save) {
       ib.setConfig({
-        screens: state.config.screens,
-        snapshot_w: state.config.snapshot_w,
-        snapshot_h: state.config.snapshot_h,
+        screens: state.screens,
+        snapshot_w: state.snapshot_w,
+        snapshot_h: state.snapshot_h,
       })
+      last_save = state.save_seq
     }
   })
-  store.dispatch('config/start', {
+
+  store.dispatch('init_from_config', {
+    config: ib.config,
     devices: ib.devices,
   })
+
   ib.onConfigSave && ib.onConfigSave(() => {
-    console.log("config saved!")
-    store.dispatch('config/saved')
+    EventBus.$emit('saved')
   })
   new Vue({
     el: "#app",

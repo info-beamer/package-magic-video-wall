@@ -36,6 +36,10 @@
       .mapping-tool {
         margin-top: 50px;
       }
+      .mapping-tool .alert {
+        margin-top: 10px;
+        margin-bottom: 0;
+      }
     </style>
   </head>
   <body>
@@ -64,7 +68,15 @@
       MOCK_CONFIG = {
         snapshot_w: 800,
         snapshot_h: 370,
-        screens: [],
+        screens: [{
+          serial: "12345",
+          homography: [1,2,3,4],
+          homography_secondary: [],
+        }, {
+          serial: "45678",
+          homography: [],
+          homography_secondary: [],
+        }],
       }
     </script>
     <script src='apriltag.js'></script>

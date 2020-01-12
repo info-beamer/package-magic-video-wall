@@ -64,7 +64,6 @@ local function Screen(screen_no, pos)
             WIDTH = pos.x2 - pos.x1
             HEIGHT = pos.y2 - pos.y1
             mapped(function(width, height)
-                print(width, height)
                 util.draw_correct(obj, 0, 0, width, height)
             end)
         gl.popMatrix()
