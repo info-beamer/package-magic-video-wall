@@ -8,6 +8,10 @@
     },
     "platforms": ["pi/epoch-1", "pi-4"],
     "version": "dual",
+    "offline": {
+        "support": "no",
+        "info": "Requires correct system time to sync across multiple devices"
+    },
     "nesting": {
         "parents": ["top-level"],
         "childs": []

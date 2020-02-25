@@ -17,7 +17,7 @@ any size and you can rotate and place your screens
 in any way you want.
 If you're using Pi4 devices, you can connect two
 screens to each Pi4. Otherwise with older Pis you'll
-need once Pi per screen.
+need one Pi per screen.
 
 Content on your video wall can be images or videos.
 Due to how videos are rendered, the resolution
@@ -30,48 +30,55 @@ but results might vary. You'll probably get the best
 result if you use a multicast stream and all
 devices connected using Ethernet.
 
-Configure the screens
----------------------
+Set a playlist
+--------------
 
 After you imported this package into your account
 you'll first have to create a setup based on it.
 A setup allows you to create a video wall from
 a collection of screens. If you want to create
-multiple video walls, just create multiple setup.
+multiple video walls, just create multiple setups.
 In the setup you'll first have to click on the
 **Assigned devices** tab and add all the screens
 you want to use. Then click back to the **Configuration**
-tab. You should see the screens you've just assigned.
-The first thing you'll have to do now is click on
-the **Save** button. This will instruct all assigned
+tab. 
+
+Click on the node labeled **Playlist Configuration** on the
+left side of the configuration screen.
+
+You can add images and video assets to your playlist.
+If you make changes to the playlist and click on **Save**, your
+devices will have to resync for a short moment.
+
+Configure the screens
+---------------------
+
+Let's configure the assigned screens. On the left
+side, click the node labeled **Screen Configuration**.
+
+You should see the screens you have assigned.
+In case you didn't while setting up the playlist, click
+on **Save** now.  This will instruct all assigned
 devices to show a configuration tag. Each screen
 should now show something like this:
 
 ![A configuration tag](config-tag.png)
 
 The next step is to take a picture of all your screens
-from the position of your future viewers. For example
-stand directly in front of all your screens and take
-a picture. Make sure all tags are visible.
+from the position of your future viewers.
 
-Click on **Upload/Capture Mapping Picture** and
+_If you have a webcam available, you might skip to the
+next section below!_
+
+When configuring the video wall for the first time,
+it's usually best to stand directly in front of all
+your screens and take a picture. Make sure all
+tags are visible.
+
+Then click on **Upload/Capture Mapping Picture** and
 select the picture you just created. Certain browsers,
 especially on mobile devices, also allow you to directly
 take a picture instead of selecting an existing picture.
-
-If your browser supports webcam access you can
-instead use the webcam mapping mode. Just click on
-the **Start Webcam Mapping** button. Your browser might
-ask for permission to access the webcam. Allow this
-access (Due to how the info-beamer configuration
-interface works, the live video stream *never*
-leaves your browser: All computation is done on your
-machine and is never shared with info-beamer.com
-or any other site), then point the webcam to your video
-wall screens. You will see a preview window showing
-all detected screens. You can use the current result
-by clicking on the **Use current mapping** button or
-cancel the mapping using the **Cancel** button.
 
 After you've selected or taken a picture it might take
 a moment to automatically detect all the tags in the picture.
@@ -84,13 +91,31 @@ If your snapshot didn't detect all tags or some
 tags are covered, you can create more mapping
 pictures to configure your wall. Be sure to capture
 any additional snapshot from the same position you
-took the initial snapshot. Otherwise your mapping
-won't work. Additional snapshots allows you to
+took the initial snapshot. Otherwise your video wall
+will look weird. Additional snapshots allows you to
 create setups that include partially occluded screens:
 First create a snapshot with all the screens in
 the "bottom layer". Then, while keeping the camera
 in the same position, add more screens on top and
 create more snapshots to complete your setup.
+
+Webcam Realtime Mapping
+-----------------------
+
+If your browser supports webcam access you can
+instead use the Webcam Mapping mode. Just click on
+the **Start Webcam Mapping** button. Your browser might
+ask for permission to access the webcam. Allow this
+access (Due to how the info-beamer configuration
+interface works, the live video stream *never*
+leaves your browser: All computation is done on your
+machine and is never shared with info-beamer.com
+or any other site), then point the webcam to your video
+wall screens. You will see a preview window showing
+all detected screens as they are added to your video
+wall. If you want to see the current configuration on
+your screens, just save the setup. Once you've mapped
+all screens, you might click on **Stop Webcam Mapping**.
 
 Changing the mapping
 --------------------
@@ -122,18 +147,6 @@ the less of the content you'll see on them later.
 
 I'd suggest you just play around with them a bit to
 get a feeling of how the mapping system works.
-
-Set a playlist
---------------
-
-Click on the node labeled **Playlist Configuration** on the
-left side of the configuration screen.
-
-You can add images and video assets to your playlist.
-If you make changes to a playlist and click on **Save**, your
-devices will go black for a short moment until they are all
-back in sync. Therefore it is recommended to make all
-changes to a playlist and save only once.
 
 Streaming
 ---------
