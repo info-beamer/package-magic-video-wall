@@ -163,6 +163,14 @@ generate such a stream from a connected camera module.
 Learn more about the package:
 https://info-beamer.com/pkg/7314
 
+Offline
+-------
+
+This package will not work offline as it requires a correct
+system time across all devices using the package. Usually
+that system time is provided online by querying NTP servers.
+Without a correct time, the video wall will be desynced.
+
 Release history
 ---------------
 
