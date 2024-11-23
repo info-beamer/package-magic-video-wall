@@ -6,7 +6,7 @@
     "runtime": {
         "outside_sources": true
     },
-    "platforms": ["pi/epoch-1", "pi-4"],
+    "platforms": ["pi/epoch-1", "pi/epoch-2"],
     "version": "dual",
     "offline": {
         "support": "no",
