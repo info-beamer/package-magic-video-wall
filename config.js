@@ -323,11 +323,16 @@ Vue.component('config-ui', {
               <template v-else>
                 <button
                   class="btn btn-primary"
-                  :disabled='!can_capture'
+                  :disabled='!can_capture || opening_cam'
                   @click="onCamMapping"
                 >
                   <span class='glyphicon glyphicon-camera'></span>
-                  Start Webcam Mapping
+                  <template v-if='opening_cam'>
+                    Opening camera...
+                  </template>
+                  <template v-else>
+                    Start Webcam Mapping
+                  </template>
                 </button>
               </template>
             </div>
@@ -357,6 +362,7 @@ Vue.component('config-ui', {
   data: () => ({
     can_capture: !!navigator.mediaDevices,
     is_mapping: false,
+    opening_cam: false,
     preview_timeout: null,
   }),
   created() {
@@ -486,19 +492,23 @@ Vue.component('config-ui', {
       }
       this.preview_timeout = setTimeout(this.updateDetection, 1000)
     },
-    onCamMapping() {
-      navigator.mediaDevices.getUserMedia({video: true}).then(async stream => {
+    async onCamMapping() {
+      this.opening_cam = true
+      await this.$nextTick()
+      try {
+        let stream = await navigator.mediaDevices.getUserMedia({video: true})
         this.is_mapping = true
         await this.$nextTick()
         const video = this.$refs.video
         video.srcObject = stream
+        this.allow_updates = true
         this.setMessage('Webcam Mapping started. Point the camera to your displays.')
-      }).catch(err => {
+        this.preview_timeout = setTimeout(this.updateDetection, 100)
+      } catch (err) {
         console.log(err)
         alert("Cannot access the camera")
-      })
-      this.allow_updates = true
-      this.preview_timeout = setTimeout(this.updateDetection, 1000)
+      }
+      this.opening_cam = false
     },
     onUpload(evt) {
       const reader = new FileReader()
