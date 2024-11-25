@@ -174,6 +174,11 @@ Without a correct time, the video wall will be desynced.
 Release history
 ---------------
 
+### Version '1.0'
+
+Fixed webcam capturing not working sometimes if requesting
+camera access takes too long.
+
 ### Version 'dual'
 
 This version now supports dual display configurations
