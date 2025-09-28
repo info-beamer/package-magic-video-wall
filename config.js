@@ -496,7 +496,7 @@ Vue.component('config-ui', {
       this.opening_cam = true
       await this.$nextTick()
       try {
-        let stream = await navigator.mediaDevices.getUserMedia({video: true})
+        let stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: "environment"}})
         this.is_mapping = true
         await this.$nextTick()
         const video = this.$refs.video
