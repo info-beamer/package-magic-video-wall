@@ -7,12 +7,7 @@ node.make_nested()
 
 -- Start preloading images this many second before
 -- they are displayed.
-local PREPARE_TIME = 1 -- seconds
-
--- must be enough time to load a video and have it
--- ready in the paused state. Normally 500ms should
--- be enough.
-local VIDEO_PRELOAD_TIME = 0.5 -- seconds
+local PREPARE_TIME = 1.5 -- seconds
 
 local font = resource.load_font "silkscreen.ttf"
 local tags = resource.load_image{
@@ -187,23 +182,17 @@ local Image = {
 
 local Video = {
     slot_time = function(self)
-        return VIDEO_PRELOAD_TIME + self.duration
+        return self.duration
     end;
     prepare = function(self)
+        self.obj = resource.load_video{
+            file = self.file:copy();
+            audio = audio,
+            paused = true;
+            looped = true;
+        }
     end;
     tick = function(self, now)
-        if not self.obj then
-            self.obj = resource.load_video{
-                file = self.file:copy();
-                audio = audio,
-                paused = true;
-            }
-        end
-
-        if now < self.t_start + VIDEO_PRELOAD_TIME then
-            return
-        end
-
         self.obj:start()
         local state, w, h = self.obj:state()
 
