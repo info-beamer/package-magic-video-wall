@@ -5,6 +5,16 @@ util.no_globals()
 -- We need to access files in playlist/
 node.make_nested()
 
+-- Target latency between incoming stream package pts and pts of video
+-- frame on the display. For low latency streams like rtp multicast this
+-- will eventually sync up all displays.
+--
+-- Example ffmpeg cmd:
+--
+-- ffmpeg -s 1280x720 -f x11grab -i :0.0+0,0 -vcodec libx264 \
+--    -preset ultrafast -f mpegts -pix_fmt yuv420p udp://236.0.0.1:2000
+local TARGET_LATENCY = 0.3
+
 -- Start preloading images this many second before
 -- they are displayed.
 local PREPARE_TIME = 1.5 -- seconds
@@ -24,6 +34,11 @@ local scissors = sys.get_ext "scissors"
 local serial = sys.get_env "SERIAL"
 local assigned = false
 local audio = false
+local fallback = nil
+
+local function printf(fmt, ...)
+    return print(string.format(fmt, ...))
+end
 
 local function Screen(screen_no, pos)
     local mapped = function() end
@@ -273,6 +288,9 @@ local function Playlist()
 
         if num_running == 0 then
             local wait = next_running - now
+            if fallback then
+                fallback:draw(0, 0, WIDTH, HEIGHT)
+            end
             msg("waiting for sync %.1f", wait)
         end
     end
@@ -319,8 +337,7 @@ end
 local playlist = Playlist()
 
 local function Stream()
-    local vid
-    local url
+    local vid, url, latency, speed
 
     local function stop()
         if vid then
@@ -332,7 +349,10 @@ local function Stream()
     local function start()
         vid = resource.load_video{
             file = url,
+            audio = audio,
         }
+        latency = 0
+        speed = 1
     end
 
     local function set(stream_url)
@@ -357,6 +377,23 @@ local function Stream()
         if state == "loaded" then
             for i, screen in ipairs(screens) do
                 screen.draw(vid)
+            end
+
+            if vid.buffer then
+                latency = 0.98 * latency + 0.02 * vid:buffer()
+                if (speed > 1 and latency < TARGET_LATENCY) or
+                   (speed < 1 and latency > TARGET_LATENCY) then
+                   speed = 1
+                elseif latency > TARGET_LATENCY * 1.1 then
+                    speed = 1.01
+                elseif latency < TARGET_LATENCY * 0.9 then
+                    speed = 0.99
+                end
+                printf(
+                    "latency=%.5fs, target=%7.3f%% => speed %4.2fx",
+                    latency, 100 / TARGET_LATENCY * latency, speed
+                )
+                vid:speed(speed)
             end
         elseif state == "finished" or state == "error" then
             stop()
@@ -394,7 +431,17 @@ end
 
 local tag
 
-util.json_watch("config.json", function(config)
+local function if_modified(handler)
+    local last_hash = nil
+    return function(config)
+        if config.__metadata.config_hash ~= last_hash then
+            last_hash = config.__metadata.config_hash
+            return handler(config)
+        end
+    end
+end
+
+util.json_watch("config.json", if_modified(function(config)
     tag = nil
     assigned = false
 
@@ -412,9 +459,9 @@ util.json_watch("config.json", function(config)
             return
         end
     end
-end)
+end))
 
-util.json_watch("playlist/config.json", function(config)
+util.json_watch("playlist/config.json", if_modified(function(config)
     local items = {}
     for idx = 1, #config.playlist do
         local item = config.playlist[idx]
@@ -427,8 +474,14 @@ util.json_watch("playlist/config.json", function(config)
     playlist.set(prepare_playlist(items))
     stream.set(config.stream)
     audio = config.audio
+    if config.fallback.asset_id == 'blank.png' then
+        fallback:dispose()
+        fallback = nil
+    else
+        fallback = resource.load_image('playlist/' .. config.fallback.asset_name)
+    end
     node.gc()
-end)
+end))
 
 local function all_mapped()
     for i, screen in ipairs(screens) do

@@ -33,17 +33,26 @@
         "title": "Experimental: Multicast Stream Source",
         "name": "stream",
         "type": "string",
-        "ui_width": 9,
+        "ui_width": 6,
         "doc_link": true,
         "placeholder": "Url of your stream. Usually pointing to an .sdp file. Leave empty to play the playlist configured above.",
         "default": ""
     }, {
+        "title": "Fallback",
+        "ui_width": 4,
+        "name": "fallback",
+        "type": "resource",
+        "hint": "If not using included 'blank.png', show specified image while waiting for sync",
+        "valid": ["image"],
+        "features": ["image4k"],
+        "default": "blank.png"
+    }, {
         "title": "Audio",
-        "ui_width": 3,
+        "ui_width": 2,
         "name": "audio",
         "type": "boolean",
         "hint": "Play audio for all videos",
-        "info": "Enable audio",
+        "info": "Enable",
         "doc_link": true,
         "default": false
     }]

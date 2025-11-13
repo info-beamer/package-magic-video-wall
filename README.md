@@ -174,6 +174,12 @@ Without a correct time, the video wall will be desynced.
 Release history
 ---------------
 
+### Version '1.1'
+
+ * Improve webcam mapping flow: Request back camera by default and avoid restarting playback no mapping changes.
+ * Allow specifying fallback image on resync
+ * Improve synchronization while streaming by slowly drifting video playback.
+
 ### Version '1.0'
 
 Fixed webcam capturing not working sometimes if requesting
