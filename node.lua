@@ -475,7 +475,9 @@ util.json_watch("playlist/config.json", if_modified(function(config)
     stream.set(config.stream)
     audio = config.audio
     if config.fallback.asset_id == 'blank.png' then
-        fallback:dispose()
+        if fallback then
+            fallback:dispose()
+        end
         fallback = nil
     else
         fallback = resource.load_image('playlist/' .. config.fallback.asset_name)
